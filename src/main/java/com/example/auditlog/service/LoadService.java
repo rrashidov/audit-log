@@ -25,6 +25,7 @@ public class LoadService {
 
     private final KeyValueRepository keyValueRepository;
     private final AuditLogRepository auditLogRepository;
+    private final SettingsService settingsService;
 
     private final Random random = new Random();
     private volatile boolean running = false;
@@ -40,11 +41,32 @@ public class LoadService {
     private void runLoop() {
         while (running) {
             try {
-                OperationType op = OperationType.values()[random.nextInt(4)];
-                performOperation(op);
+                runOneIteration();
+            } catch (InterruptedException e) {
+                // Honour shutdown / explicit interrupts. Restore the flag
+                // (best practice) and exit the loop cleanly.
+                Thread.currentThread().interrupt();
+                break;
             } catch (Exception e) {
                 log.warn("Error in load loop: {}", e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Package-private for direct testing. Runs exactly one iteration of the
+     * load loop: pick a random operation, perform it (audit-logged inside
+     * {@link #performOperation}), then sleep the configured delay. The sleep
+     * is deliberately OUTSIDE the @Transactional performOperation call — a
+     * sleeping thread must not hold a DB connection or row locks.
+     */
+    void runOneIteration() throws InterruptedException {
+        OperationType op = OperationType.values()[random.nextInt(4)];
+        performOperation(op);
+
+        long delay = settingsService.getLoadDelayMs();
+        if (delay > 0) {
+            Thread.sleep(delay);
         }
     }
 
