@@ -3,7 +3,6 @@ package com.example.auditlog.service;
 import com.example.auditlog.repository.KeyValueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +17,12 @@ public class WarmupService {
 
     private final KeyValueRepository keyValueRepository;
     private final JdbcTemplate jdbcTemplate;
-
-    @Value("${app.warmup.target:1000000}")
-    private long warmupTarget;
+    private final SettingsService settingsService;
 
     private static final int BATCH_SIZE = 1000;
 
     public void warmup() {
+        long warmupTarget = settingsService.getWarmupTarget();
         long existing = keyValueRepository.count();
         long needed = warmupTarget - existing;
 
