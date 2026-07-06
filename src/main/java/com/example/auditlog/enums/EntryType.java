@@ -1,0 +1,11 @@
+package com.example.auditlog.enums;
+
+public enum EntryType {
+    REGULAR,
+    MINUTE_CONSOLIDATION,
+    HOUR_CONSOLIDATION,
+    DAY_CONSOLIDATION,
+    WEEK_CONSOLIDATION,
+    MONTH_CONSOLIDATION,
+    YEAR_CONSOLIDATION
+}

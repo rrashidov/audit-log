@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auditlog
+      MYSQL_USER: auditlog
+      MYSQL_PASSWORD: auditlog
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "auditlog", "-pauditlog"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: auditlog
+      DB_USER: auditlog
+      DB_PASSWORD: auditlog
+      WARMUP_TARGET: ${WARMUP_TARGET:-1000000}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

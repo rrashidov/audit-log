@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KeyValue List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">Audit Log App</a>
+        <div class="navbar-nav">
+            <a class="nav-link active" href="/keyvalue">KeyValue</a>
+            <a class="nav-link" href="/auditlog">Audit Log</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2>KeyValue Entities</h2>
+    <p class="text-muted">Total: <span th:text="${keyValues.totalElements}">0</span> records</p>
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Value</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="kv : ${keyValues.content}">
+            <td th:text="${kv.id}" class="text-truncate" style="max-width: 300px;"></td>
+            <td th:text="${kv.value}" class="text-truncate" style="max-width: 300px;"></td>
+        </tr>
+        <tr th:if="${keyValues.content.empty}">
+            <td colspan="2" class="text-center text-muted">No records found</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav th:if="${keyValues.totalPages > 1}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/keyvalue(page=${currentPage - 1})}">Previous</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${keyValues.totalPages}">1</span></span>
+            </li>
+            <li class="page-item" th:classappend="${currentPage + 1 >= keyValues.totalPages} ? 'disabled'">
+                <a class="page-link" th:href="@{/keyvalue(page=${currentPage + 1})}">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
