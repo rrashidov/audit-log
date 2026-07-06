@@ -59,4 +59,47 @@ class SettingsServiceTest {
                 .map(AppSetting::getValue)
                 .contains("not-a-number");
     }
+
+    @org.junit.jupiter.api.Test
+    void setLoadDelayMs_persistsAndUpdatesCache() {
+        repo.deleteAll();
+        service.resetCacheForTests();
+
+        service.setLoadDelayMs(750L);
+
+        assertThat(repo.findById(SettingsService.KEY_LOAD_DELAY_MS))
+                .map(AppSetting::getValue)
+                .contains("750");
+        // Next read must return the new value without needing a cache miss.
+        assertThat(service.getLoadDelayMs()).isEqualTo(750L);
+    }
+
+    @org.junit.jupiter.api.Test
+    void setWarmupTarget_persistsAndUpdatesCache() {
+        repo.deleteAll();
+        service.resetCacheForTests();
+
+        service.setWarmupTarget(5000L);
+
+        assertThat(repo.findById(SettingsService.KEY_WARMUP_TARGET))
+                .map(AppSetting::getValue)
+                .contains("5000");
+        assertThat(service.getWarmupTarget()).isEqualTo(5000L);
+    }
+
+    @org.junit.jupiter.api.Test
+    void setLoadDelayMs_rejectsNegative() {
+        org.assertj.core.api.Assertions
+                .assertThatThrownBy(() -> service.setLoadDelayMs(-1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(">= 0");
+    }
+
+    @org.junit.jupiter.api.Test
+    void setWarmupTarget_rejectsNegative() {
+        org.assertj.core.api.Assertions
+                .assertThatThrownBy(() -> service.setWarmupTarget(-42L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(">= 0");
+    }
 }

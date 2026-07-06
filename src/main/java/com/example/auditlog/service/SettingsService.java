@@ -66,6 +66,24 @@ public class SettingsService {
                 });
     }
 
+    @Transactional
+    public void setLoadDelayMs(long ms) {
+        if (ms < 0) {
+            throw new IllegalArgumentException("load.delay.ms must be >= 0");
+        }
+        repo.save(new AppSetting(KEY_LOAD_DELAY_MS, Long.toString(ms)));
+        cachedLoadDelayMs = ms;
+    }
+
+    @Transactional
+    public void setWarmupTarget(long target) {
+        if (target < 0) {
+            throw new IllegalArgumentException("warmup.target must be >= 0");
+        }
+        repo.save(new AppSetting(KEY_WARMUP_TARGET, Long.toString(target)));
+        cachedWarmupTarget = target;
+    }
+
     private long parseOrDefault(String key, String raw, long defaultValue) {
         try {
             return Long.parseLong(raw);
