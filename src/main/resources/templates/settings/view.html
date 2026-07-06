@@ -1,8 +1,51 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><title>Settings</title></head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
 <body>
-<span th:text="${loadDelayMs}"></span>
-<span th:text="${warmupTarget}"></span>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">Audit Log App</a>
+        <div class="navbar-nav">
+            <a class="nav-link" href="/keyvalue">KeyValue</a>
+            <a class="nav-link" href="/auditlog">Audit Log</a>
+            <a class="nav-link active" href="/settings">Settings</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2>Settings</h2>
+
+    <div th:if="${saved}" class="alert alert-success" role="alert">
+        Settings saved.
+    </div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}">
+        error
+    </div>
+
+    <form method="post" action="/settings" class="mt-3">
+        <div class="mb-3">
+            <label for="loadDelayMs" class="form-label">Load delay (ms)</label>
+            <input type="number" min="0" class="form-control" id="loadDelayMs" name="loadDelayMs"
+                   th:value="${loadDelayMs}" required>
+            <div class="form-text">Sleep between load operations. 0 = no throttle. Takes effect immediately.</div>
+        </div>
+        <div class="mb-3">
+            <label for="warmupTarget" class="form-label">Warmup target (rows)</label>
+            <input type="number" min="0" class="form-control" id="warmupTarget" name="warmupTarget"
+                   th:value="${warmupTarget}" required>
+            <div class="form-text">Takes effect on next application restart.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/settings" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
