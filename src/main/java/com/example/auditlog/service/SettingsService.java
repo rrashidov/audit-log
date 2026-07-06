@@ -29,6 +29,7 @@ public class SettingsService {
     private volatile Long cachedLoadDelayMs;
     private volatile Long cachedWarmupTarget;
 
+    @Transactional
     public long getLoadDelayMs() {
         Long v = cachedLoadDelayMs;
         if (v == null) {
@@ -38,6 +39,7 @@ public class SettingsService {
         return v;
     }
 
+    @Transactional
     public long getWarmupTarget() {
         Long v = cachedWarmupTarget;
         if (v == null) {
@@ -54,9 +56,10 @@ public class SettingsService {
      * {@code defaultValue} WITHOUT overwriting the row — an operator can
      * inspect and fix the row manually.
      *
+     * Called only via the public getters ({@link #getLoadDelayMs()} and
+     * {@link #getWarmupTarget()}), which wrap this method in a transaction.
      * Package-private for direct testing.
      */
-    @Transactional
     long getOrSeed(String key, long defaultValue) {
         return repo.findById(key)
                 .map(s -> parseOrDefault(key, s.getValue(), defaultValue))

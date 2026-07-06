@@ -1,16 +1,11 @@
 package com.example.auditlog.controller;
 
-import com.example.auditlog.service.ConsolidationService;
-import com.example.auditlog.service.LoadService;
 import com.example.auditlog.service.SettingsService;
-import com.example.auditlog.service.WarmupService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,13 +25,6 @@ class SettingsControllerTest {
 
     @Autowired MockMvc mvc;
     @MockBean SettingsService settings;
-    // AuditLogApplication implements ApplicationRunner and requires these
-    // services via @RequiredArgsConstructor; @WebMvcTest excludes @Service
-    // beans and non-web @Configuration from the slice, so they must be mocked.
-    @MockBean WarmupService warmupService;
-    @MockBean ConsolidationService consolidationService;
-    @MockBean LoadService loadService;
-    @MockBean AtomicBoolean warmupComplete;
 
     @Test
     void get_rendersBothValues() throws Exception {

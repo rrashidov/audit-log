@@ -45,6 +45,7 @@ public class LoadService {
             } catch (InterruptedException e) {
                 // Honour shutdown / explicit interrupts. Restore the flag
                 // (best practice) and exit the loop cleanly.
+                running = false;
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception e) {
