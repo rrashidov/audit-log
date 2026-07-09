@@ -18,14 +18,17 @@ class ConsolidationServiceSchedulingTest {
     void setUp() {
         AuditLogRepository repo = mock(AuditLogRepository.class);
         AtomicBoolean warmupComplete = new AtomicBoolean(true);
-        service = new ConsolidationService(repo, warmupComplete, null);
-        spy = spy(service);
-        doNothing().when(spy).runMinute();
-        doNothing().when(spy).runHour();
-        doNothing().when(spy).runDay();
-        doNothing().when(spy).runMonth();
-        doNothing().when(spy).runYear();
-        service = spy;
+        // Create actual service, then spy on it and use spy as self
+        ConsolidationService actual = new ConsolidationService(repo, warmupComplete, null);
+        spy = spy(actual);
+        // Now rebuild the service with spy as the self reference
+        service = new ConsolidationService(repo, warmupComplete, spy);
+        service = spy(service);
+        doNothing().when(service).runMinute();
+        doNothing().when(service).runHour();
+        doNothing().when(service).runDay();
+        doNothing().when(service).runMonth();
+        doNothing().when(service).runYear();
     }
 
     @Test
@@ -55,6 +58,9 @@ class ConsolidationServiceSchedulingTest {
         AtomicBoolean notReady = new AtomicBoolean(false);
         ConsolidationService cold = new ConsolidationService(repo, notReady, null);
         ConsolidationService coldSpy = spy(cold);
+        // Re-create with coldSpy as self
+        cold = new ConsolidationService(repo, notReady, coldSpy);
+        coldSpy = spy(cold);
         doNothing().when(coldSpy).runMinute();
         doNothing().when(coldSpy).runHour();
 
@@ -70,6 +76,9 @@ class ConsolidationServiceSchedulingTest {
         AtomicBoolean notReady = new AtomicBoolean(false);
         ConsolidationService cold = new ConsolidationService(repo, notReady, null);
         ConsolidationService coldSpy = spy(cold);
+        // Re-create with coldSpy as self
+        cold = new ConsolidationService(repo, notReady, coldSpy);
+        coldSpy = spy(cold);
         doNothing().when(coldSpy).runDay();
         doNothing().when(coldSpy).runMonth();
         doNothing().when(coldSpy).runYear();

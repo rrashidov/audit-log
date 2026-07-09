@@ -10,11 +10,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,60 +43,30 @@ public class ConsolidationService {
         this.self = self;
     }
 
-    /** Snap a timestamp to the start of its bucket for the given target granularity. */
     private static final UnaryOperator<LocalDateTime> MINUTE_BUCKET =
             t -> t.truncatedTo(ChronoUnit.MINUTES);
     private static final UnaryOperator<LocalDateTime> HOUR_BUCKET =
             t -> t.truncatedTo(ChronoUnit.HOURS);
     private static final UnaryOperator<LocalDateTime> DAY_BUCKET =
             t -> t.truncatedTo(ChronoUnit.DAYS);
-    private static final UnaryOperator<LocalDateTime> WEEK_BUCKET =
-            t -> t.truncatedTo(ChronoUnit.DAYS).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     private static final UnaryOperator<LocalDateTime> MONTH_BUCKET =
             t -> t.truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1);
     private static final UnaryOperator<LocalDateTime> YEAR_BUCKET =
             t -> t.truncatedTo(ChronoUnit.DAYS).withDayOfYear(1);
 
     @Scheduled(cron = "0 * * * * *")
-    @Transactional
-    public void consolidateMinute() {
+    public void consolidateMinuteAndHour() {
         if (!warmupComplete.get()) return;
-        runMinute();
-    }
-
-    @Scheduled(cron = "0 * * * * *")
-    @Transactional
-    public void consolidateHour() {
-        if (!warmupComplete.get()) return;
-        runHour();
+        self.runMinute();
+        self.runHour();
     }
 
     @Scheduled(cron = "0 0 0 * * *")
-    @Transactional
-    public void consolidateDay() {
+    public void consolidateDayAndAbove() {
         if (!warmupComplete.get()) return;
-        runDay();
-    }
-
-    @Scheduled(cron = "0 0 0 * * MON")
-    @Transactional
-    public void consolidateWeek() {
-        if (!warmupComplete.get()) return;
-        runWeek();
-    }
-
-    @Scheduled(cron = "0 0 0 1 * *")
-    @Transactional
-    public void consolidateMonth() {
-        if (!warmupComplete.get()) return;
-        runMonth();
-    }
-
-    @Scheduled(cron = "0 0 0 1 1 *")
-    @Transactional
-    public void consolidateYear() {
-        if (!warmupComplete.get()) return;
-        runYear();
+        self.runDay();
+        self.runMonth();
+        self.runYear();
     }
 
     /**
@@ -113,7 +81,6 @@ public class ConsolidationService {
         self.runMinute();
         self.runHour();
         self.runDay();
-        self.runWeek();
         self.runMonth();
         self.runYear();
         log.info("Consolidation catch-up: complete");
@@ -138,15 +105,9 @@ public class ConsolidationService {
     }
 
     @Transactional
-    public void runWeek() {
-        LocalDateTime cutoff = WEEK_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC));
-        consolidate(EntryType.DAY_CONSOLIDATION, EntryType.WEEK_CONSOLIDATION, cutoff, WEEK_BUCKET);
-    }
-
-    @Transactional
     public void runMonth() {
         LocalDateTime cutoff = MONTH_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC));
-        consolidate(EntryType.WEEK_CONSOLIDATION, EntryType.MONTH_CONSOLIDATION, cutoff, MONTH_BUCKET);
+        consolidate(EntryType.DAY_CONSOLIDATION, EntryType.MONTH_CONSOLIDATION, cutoff, MONTH_BUCKET);
     }
 
     @Transactional
@@ -155,7 +116,6 @@ public class ConsolidationService {
         consolidate(EntryType.MONTH_CONSOLIDATION, EntryType.YEAR_CONSOLIDATION, cutoff, YEAR_BUCKET);
     }
 
-    /** Composite grouping key: rows sharing operation type and bucket-start collapse into one row. */
     private record BucketKey(OperationType operationType, LocalDateTime bucketStart) {}
 
     private void consolidate(EntryType sourceType,
@@ -190,3 +150,4 @@ public class ConsolidationService {
                 oldEntries.size(), sourceType, consolidated.size(), targetType);
     }
 }
+
