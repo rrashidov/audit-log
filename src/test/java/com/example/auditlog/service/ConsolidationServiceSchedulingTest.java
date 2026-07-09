@@ -18,17 +18,13 @@ class ConsolidationServiceSchedulingTest {
     void setUp() {
         AuditLogRepository repo = mock(AuditLogRepository.class);
         AtomicBoolean warmupComplete = new AtomicBoolean(true);
-        // Build real instance; pass itself as the self-proxy (no Spring context needed here).
         service = new ConsolidationService(repo, warmupComplete, null);
         spy = spy(service);
-        // Prevent actual DB work — we only care about call order.
         doNothing().when(spy).runMinute();
         doNothing().when(spy).runHour();
         doNothing().when(spy).runDay();
-        doNothing().when(spy).runWeek();
         doNothing().when(spy).runMonth();
         doNothing().when(spy).runYear();
-        // Inject spy as self so the scheduled methods route through it.
         service = spy;
     }
 
@@ -43,12 +39,11 @@ class ConsolidationServiceSchedulingTest {
     }
 
     @Test
-    void consolidateDayAndAbove_callsDayWeekMonthYearInOrder() {
+    void consolidateDayAndAbove_callsDayMonthYearInOrder() {
         service.consolidateDayAndAbove();
 
         InOrder order = inOrder(spy);
         order.verify(spy).runDay();
-        order.verify(spy).runWeek();
         order.verify(spy).runMonth();
         order.verify(spy).runYear();
         verifyNoMoreInteractions(spy);
@@ -76,14 +71,12 @@ class ConsolidationServiceSchedulingTest {
         ConsolidationService cold = new ConsolidationService(repo, notReady, null);
         ConsolidationService coldSpy = spy(cold);
         doNothing().when(coldSpy).runDay();
-        doNothing().when(coldSpy).runWeek();
         doNothing().when(coldSpy).runMonth();
         doNothing().when(coldSpy).runYear();
 
         coldSpy.consolidateDayAndAbove();
 
         verify(coldSpy, never()).runDay();
-        verify(coldSpy, never()).runWeek();
         verify(coldSpy, never()).runMonth();
         verify(coldSpy, never()).runYear();
     }
