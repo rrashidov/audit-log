@@ -8,8 +8,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -63,5 +65,7 @@ class SettingsControllerTest {
                 .andExpect(redirectedUrl("/settings"))
                 .andExpect(flash().attribute("error",
                         equalTo("load.delay.ms must be >= 0")));
+
+        verify(settings, never()).setWarmupTarget(anyLong());
     }
 }

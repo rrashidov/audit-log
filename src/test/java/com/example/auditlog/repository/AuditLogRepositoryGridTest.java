@@ -3,7 +3,6 @@ package com.example.auditlog.repository;
 import com.example.auditlog.entity.AuditLog;
 import com.example.auditlog.enums.EntryType;
 import com.example.auditlog.enums.OperationType;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +27,6 @@ class AuditLogRepositoryGridTest {
         repo.deleteAll();
     }
 
-    @AfterEach
-    void tearDown() {
-        repo.deleteAll();
-    }
-
     @Test
     void countGroupedByEntryType_returnsCorrectCountsPerType() {
         repo.save(auditLog(EntryType.REGULAR));
@@ -47,8 +41,7 @@ class AuditLogRepositoryGridTest {
         Map<EntryType, Long> counts = results.stream()
                 .collect(Collectors.toMap(
                         row -> (EntryType) row[0],
-                        row -> (Long) row[1],
-                        (a, b) -> a + b
+                        row -> (Long) row[1]
                 ));
 
         assertThat(counts.get(EntryType.REGULAR)).isEqualTo(2L);

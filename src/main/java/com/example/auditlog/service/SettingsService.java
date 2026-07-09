@@ -29,7 +29,6 @@ public class SettingsService {
     private volatile Long cachedLoadDelayMs;
     private volatile Long cachedWarmupTarget;
 
-    @Transactional
     public long getLoadDelayMs() {
         Long v = cachedLoadDelayMs;
         if (v == null) {
@@ -39,7 +38,6 @@ public class SettingsService {
         return v;
     }
 
-    @Transactional
     public long getWarmupTarget() {
         Long v = cachedWarmupTarget;
         if (v == null) {
@@ -57,9 +55,9 @@ public class SettingsService {
      * inspect and fix the row manually.
      *
      * Called only via the public getters ({@link #getLoadDelayMs()} and
-     * {@link #getWarmupTarget()}), which wrap this method in a transaction.
-     * Package-private for direct testing.
+     * {@link #getWarmupTarget()}). Package-private for direct testing.
      */
+    @Transactional
     long getOrSeed(String key, long defaultValue) {
         return repo.findById(key)
                 .map(s -> parseOrDefault(key, s.getValue(), defaultValue))
@@ -75,6 +73,10 @@ public class SettingsService {
             throw new IllegalArgumentException("load.delay.ms must be >= 0");
         }
         repo.save(new AppSetting(KEY_LOAD_DELAY_MS, Long.toString(ms)));
+        // Write the cache after the save succeeds. If the transaction rolls
+        // back after this point, the volatile will briefly show the new value;
+        // the next DB read (after resetCacheForTests or on the next miss) will
+        // self-correct. Clearing on exception prevents a permanently stale cache.
         cachedLoadDelayMs = ms;
     }
 

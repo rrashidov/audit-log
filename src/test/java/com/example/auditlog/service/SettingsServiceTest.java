@@ -2,12 +2,14 @@ package com.example.auditlog.service;
 
 import com.example.auditlog.entity.AppSetting;
 import com.example.auditlog.repository.AppSettingRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @TestPropertySource(properties = {
@@ -19,11 +21,14 @@ class SettingsServiceTest {
     @Autowired SettingsService service;
     @Autowired AppSettingRepository repo;
 
-    @Test
-    void getLoadDelayMs_seedsFromPropertyWhenRowMissing() {
+    @BeforeEach
+    void setUp() {
         repo.deleteAll();
         service.resetCacheForTests();
+    }
 
+    @Test
+    void getLoadDelayMs_seedsFromPropertyWhenRowMissing() {
         long value = service.getLoadDelayMs();
 
         assertThat(value).isEqualTo(45L);
@@ -35,8 +40,6 @@ class SettingsServiceTest {
 
     @Test
     void getWarmupTarget_returnsStoredValueWhenRowPresent() {
-        repo.deleteAll();
-        service.resetCacheForTests();
         repo.save(new AppSetting(SettingsService.KEY_WARMUP_TARGET, "999"));
 
         long value = service.getWarmupTarget();
@@ -46,8 +49,6 @@ class SettingsServiceTest {
 
     @Test
     void getLoadDelayMs_returnsSeededDefaultWhenStoredValueIsCorrupt() {
-        repo.deleteAll();
-        service.resetCacheForTests();
         repo.save(new AppSetting(SettingsService.KEY_LOAD_DELAY_MS, "not-a-number"));
 
         long value = service.getLoadDelayMs();
@@ -60,11 +61,8 @@ class SettingsServiceTest {
                 .contains("not-a-number");
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void setLoadDelayMs_persistsAndUpdatesCache() {
-        repo.deleteAll();
-        service.resetCacheForTests();
-
         service.setLoadDelayMs(750L);
 
         assertThat(repo.findById(SettingsService.KEY_LOAD_DELAY_MS))
@@ -74,11 +72,8 @@ class SettingsServiceTest {
         assertThat(service.getLoadDelayMs()).isEqualTo(750L);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void setWarmupTarget_persistsAndUpdatesCache() {
-        repo.deleteAll();
-        service.resetCacheForTests();
-
         service.setWarmupTarget(5000L);
 
         assertThat(repo.findById(SettingsService.KEY_WARMUP_TARGET))
@@ -87,18 +82,16 @@ class SettingsServiceTest {
         assertThat(service.getWarmupTarget()).isEqualTo(5000L);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void setLoadDelayMs_rejectsNegative() {
-        org.assertj.core.api.Assertions
-                .assertThatThrownBy(() -> service.setLoadDelayMs(-1L))
+        assertThatThrownBy(() -> service.setLoadDelayMs(-1L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(">= 0");
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void setWarmupTarget_rejectsNegative() {
-        org.assertj.core.api.Assertions
-                .assertThatThrownBy(() -> service.setWarmupTarget(-42L))
+        assertThatThrownBy(() -> service.setWarmupTarget(-42L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(">= 0");
     }

@@ -1,6 +1,8 @@
 package com.example.auditlog.repository;
 
 import com.example.auditlog.entity.AppSetting;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,9 +21,18 @@ class AppSettingRepositoryTest {
     @Autowired
     AppSettingRepository repo;
 
+    @BeforeEach
+    void setUp() {
+        repo.deleteAll();
+    }
+
+    @AfterEach
+    void tearDown() {
+        repo.deleteAll();
+    }
+
     @Test
     void saveAndFindByKey() {
-        repo.deleteAll();
         repo.save(new AppSetting("load.delay.ms", "250"));
 
         Optional<AppSetting> found = repo.findById("load.delay.ms");
@@ -32,7 +43,6 @@ class AppSettingRepositoryTest {
 
     @Test
     void saveWithExistingKeyUpserts() {
-        repo.deleteAll();
         repo.save(new AppSetting("warmup.target", "1000"));
         repo.save(new AppSetting("warmup.target", "2000"));
 

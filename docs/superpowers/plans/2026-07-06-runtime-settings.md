@@ -89,19 +89,18 @@ Insert the following inside `<dependencies>`, immediately after the `spring-boot
 Create `src/test/resources/application.properties` with exactly this content:
 
 ```properties
-spring.datasource.url=jdbc:h2:mem:auditlog;MODE=MySQL;DB_CLOSE_DELAY=-1
+spring.datasource.url=jdbc:h2:mem:auditlog;MODE=MySQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=VALUE
 spring.datasource.driver-class-name=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
 spring.jpa.hibernate.ddl-auto=create-drop
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
 spring.jpa.properties.hibernate.jdbc.time_zone=UTC
 spring.jpa.show-sql=false
 app.warmup.target=10
 app.load.delay.ms=0
 ```
 
-Rationale: `MODE=MySQL` makes H2 accept the same SQL Hibernate emits for MySQL. `create-drop` gives every `@SpringBootTest` a clean schema. `app.warmup.target=10` keeps the smoke test's warmup phase near-instant.
+Rationale: `MODE=MySQL` makes H2 accept the same SQL Hibernate emits for MySQL. `NON_KEYWORDS=VALUE` is required because H2 2.x treats `VALUE` as reserved even under `MODE=MySQL`, and the existing `KeyValue` entity maps a column literally named `value`. `create-drop` gives every `@SpringBootTest` a clean schema. `app.warmup.target=10` keeps the smoke test's warmup phase near-instant. The Hibernate dialect is intentionally NOT set — Hibernate 6.x auto-detects H2, and setting it explicitly produces the `HHH90000025` deprecation warning.
 
 - [ ] **Step 4: Create smoke test to prove the harness loads**
 
@@ -164,13 +163,17 @@ package com.example.auditlog.repository;
 import com.example.auditlog.entity.AppSetting;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+// Uses @SpringBootTest (not @DataJpaTest) so the datasource wired via
+// src/test/resources/application.properties is honoured — including
+// NON_KEYWORDS=VALUE, without which H2 rejects the "value" column as a
+// reserved keyword. Matches the pattern SettingsServiceTest uses in Task 3.
+@SpringBootTest
 class AppSettingRepositoryTest {
 
     @Autowired
@@ -178,6 +181,7 @@ class AppSettingRepositoryTest {
 
     @Test
     void saveAndFindByKey() {
+        repo.deleteAll();
         repo.save(new AppSetting("load.delay.ms", "250"));
 
         Optional<AppSetting> found = repo.findById("load.delay.ms");
@@ -188,6 +192,7 @@ class AppSettingRepositoryTest {
 
     @Test
     void saveWithExistingKeyUpserts() {
+        repo.deleteAll();
         repo.save(new AppSetting("warmup.target", "1000"));
         repo.save(new AppSetting("warmup.target", "2000"));
 
@@ -743,7 +748,7 @@ class LoadServiceDelayTest {
     }
 
     @Test
-    void runOneIteration_sleepsRequestedMillisWhenDelayPositive() {
+    void runOneIteration_sleepsRequestedMillisWhenDelayPositive() throws Exception {
         when(settings.getLoadDelayMs()).thenReturn(80L);
 
         long start = System.currentTimeMillis();
@@ -757,7 +762,7 @@ class LoadServiceDelayTest {
     }
 
     @Test
-    void runOneIteration_skipsSleepWhenDelayZero() {
+    void runOneIteration_skipsSleepWhenDelayZero() throws Exception {
         when(settings.getLoadDelayMs()).thenReturn(0L);
 
         long start = System.currentTimeMillis();
@@ -974,12 +979,17 @@ Create `src/test/java/com/example/auditlog/controller/SettingsControllerTest.jav
 ```java
 package com.example.auditlog.controller;
 
+import com.example.auditlog.service.ConsolidationService;
+import com.example.auditlog.service.LoadService;
 import com.example.auditlog.service.SettingsService;
+import com.example.auditlog.service.WarmupService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.eq;
@@ -999,6 +1009,13 @@ class SettingsControllerTest {
 
     @Autowired MockMvc mvc;
     @MockBean SettingsService settings;
+    // AuditLogApplication implements ApplicationRunner and requires these
+    // services via @RequiredArgsConstructor; @WebMvcTest excludes @Service
+    // beans and non-web @Configuration from the slice, so they must be mocked.
+    @MockBean WarmupService warmupService;
+    @MockBean ConsolidationService consolidationService;
+    @MockBean LoadService loadService;
+    @MockBean AtomicBoolean warmupComplete;
 
     @Test
     void get_rendersBothValues() throws Exception {
@@ -1040,6 +1057,23 @@ class SettingsControllerTest {
     }
 }
 ```
+
+Note: the four mocks beyond `SettingsService` are load-bearing for `@WebMvcTest` to bring up the context. `AuditLogApplication` is annotated `@SpringBootApplication` and implements `ApplicationRunner` with `@RequiredArgsConstructor` — Spring resolves the main class during context loading and needs those dependencies satisfied even in a web-slice test.
+
+Additionally, `@WebMvcTest` performs actual view resolution when a `get()` in `MockMvc` returns a view name. If `templates/settings/view.html` does not exist yet, Thymeleaf throws `TemplateInputException`. Create a minimal stub template as part of this task:
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><title>Settings</title></head>
+<body>
+<span th:text="${loadDelayMs}"></span>
+<span th:text="${warmupTarget}"></span>
+</body>
+</html>
+```
+
+at `src/main/resources/templates/settings/view.html`. Task 8 replaces this stub with the full page.
 
 - [ ] **Step 3: Run to verify they fail**
 
@@ -1109,7 +1143,8 @@ Expected: BUILD SUCCESS, 3 tests pass.
 ```bash
 git add src/main/resources/application.properties \
         src/main/java/com/example/auditlog/controller/SettingsController.java \
-        src/test/java/com/example/auditlog/controller/SettingsControllerTest.java
+        src/test/java/com/example/auditlog/controller/SettingsControllerTest.java \
+        src/main/resources/templates/settings/view.html
 git commit -m "feat(settings): controller + property default for load delay"
 ```
 
@@ -1128,9 +1163,11 @@ git commit -m "feat(settings): controller + property default for load delay"
 
 This task has no automated tests. Verification is manual — start the app locally (or via Docker) and load `/settings`.
 
+Task 7 left a minimal stub at `src/main/resources/templates/settings/view.html` so `@WebMvcTest` could render the view. Step 1 replaces that stub with the full page — an overwrite, not a new file.
+
 - [ ] **Step 1: Create the settings template**
 
-Create `src/main/resources/templates/settings/view.html`:
+Overwrite `src/main/resources/templates/settings/view.html` with:
 
 ```html
 <!DOCTYPE html>

@@ -29,6 +29,14 @@ public class SettingsController {
                        @RequestParam long warmupTarget,
                        RedirectAttributes ra) {
         try {
+            // Validate both values before writing either, so a validation
+            // failure on the second field does not leave a partial update.
+            if (loadDelayMs < 0) {
+                throw new IllegalArgumentException("load.delay.ms must be >= 0");
+            }
+            if (warmupTarget < 0) {
+                throw new IllegalArgumentException("warmup.target must be >= 0");
+            }
             settingsService.setLoadDelayMs(loadDelayMs);
             settingsService.setWarmupTarget(warmupTarget);
             ra.addFlashAttribute("saved", true);
