@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 @Controller
 @RequestMapping("/auditlog")
 @RequiredArgsConstructor
@@ -22,6 +26,28 @@ public class AuditLogController {
     private final AuditLogRepository auditLogRepository;
 
     private static final int PAGE_SIZE = 20;
+
+    private static final int CANVAS_WIDTH = 720;
+    private static final int SQUARE_STEP = 12;   // 10px square + 2px gap
+    private static final int FREE_ROWS = 3;
+
+    private static final List<String> TYPE_ORDER = List.of(
+            "YEAR_CONSOLIDATION",
+            "MONTH_CONSOLIDATION",
+            "DAY_CONSOLIDATION",
+            "HOUR_CONSOLIDATION",
+            "MINUTE_CONSOLIDATION",
+            "REGULAR"
+    );
+
+    private static final Map<String, String> TYPE_COLORS = Map.of(
+            "YEAR_CONSOLIDATION",  "#e879f9",
+            "MONTH_CONSOLIDATION", "#f87171",
+            "DAY_CONSOLIDATION",   "#a78bfa",
+            "HOUR_CONSOLIDATION",  "#f59e0b",
+            "MINUTE_CONSOLIDATION","#60a5fa",
+            "REGULAR",             "#4ade80"
+    );
 
     @GetMapping
     public String list(
@@ -50,5 +76,34 @@ public class AuditLogController {
         model.addAttribute("entryTypes", EntryType.values());
         model.addAttribute("operationTypes", OperationType.values());
         return "auditlog/list";
+    }
+
+    @GetMapping("/grid")
+    public String grid(Model model) {
+        List<Object[]> rows = auditLogRepository.countGroupedByEntryType();
+
+        Map<String, Long> counts = new LinkedHashMap<>();
+        for (String type : TYPE_ORDER) {
+            counts.put(type, 0L);
+        }
+        for (Object[] row : rows) {
+            counts.put(((EntryType) row[0]).name(), (Long) row[1]);
+        }
+
+        long totalRecords = counts.values().stream().mapToLong(Long::longValue).sum();
+
+        int cols = CANVAS_WIDTH / SQUARE_STEP;
+        // Canvas height will be computed in JS; server needs dataCells for scale only.
+        // Use a generous row estimate (50 rows) to keep scale reasonable.
+        int estimatedRows = 50;
+        int dataCells = (estimatedRows * cols) - (FREE_ROWS * cols);
+        long scale = Math.max(1L, (long) Math.ceil((double) totalRecords / dataCells));
+
+        model.addAttribute("counts", counts);
+        model.addAttribute("totalRecords", totalRecords);
+        model.addAttribute("scale", scale);
+        model.addAttribute("typeOrder", TYPE_ORDER);
+        model.addAttribute("colors", TYPE_COLORS);
+        return "auditlog/grid";
     }
 }
