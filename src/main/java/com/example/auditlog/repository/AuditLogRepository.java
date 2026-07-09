@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -22,4 +23,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, String>, Jpa
     Page<AuditLog> findByOperationType(OperationType operationType, Pageable pageable);
 
     Page<AuditLog> findByEntryTypeAndOperationType(EntryType entryType, OperationType operationType, Pageable pageable);
+
+    @Query("SELECT a.entryType, COUNT(a) FROM AuditLog a GROUP BY a.entryType")
+    List<Object[]> countByEntryType();
 }
