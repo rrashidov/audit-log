@@ -102,11 +102,17 @@ public class AuditLogController {
 
         Map<String, String> colors = new LinkedHashMap<>(TYPE_COLORS);
 
+        // legendEntries: list of String[]{typeName, hexColor} for the legend — avoids map lookup in Thymeleaf
+        List<String[]> legendEntries = TYPE_ORDER.stream()
+                .map(t -> new String[]{t, TYPE_COLORS.get(t)})
+                .toList();
+
         model.addAttribute("counts", counts);
         model.addAttribute("totalRecords", totalRecords);
         model.addAttribute("scale", scale);
         model.addAttribute("typeOrder", TYPE_ORDER);
         model.addAttribute("colors", colors);
+        model.addAttribute("legendEntries", legendEntries);
         return "auditlog/grid";
     }
 }
