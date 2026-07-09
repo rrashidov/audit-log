@@ -34,7 +34,7 @@ class AuditLogRepositoryGridTest {
     }
 
     @Test
-    void countByEntryType_returnsCorrectCountsPerType() {
+    void countGroupedByEntryType_returnsCorrectCountsPerType() {
         repo.save(auditLog(EntryType.REGULAR));
         repo.save(auditLog(EntryType.REGULAR));
         repo.save(auditLog(EntryType.MINUTE_CONSOLIDATION));
@@ -58,7 +58,7 @@ class AuditLogRepositoryGridTest {
     }
 
     @Test
-    void countByEntryType_emptyTable_returnsEmptyList() {
+    void countGroupedByEntryType_emptyTable_returnsEmptyList() {
         List<Object[]> results = repo.countGroupedByEntryType();
         assertThat(results).isEmpty();
     }

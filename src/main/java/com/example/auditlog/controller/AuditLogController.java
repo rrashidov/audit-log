@@ -95,6 +95,7 @@ public class AuditLogController {
         int cols = CANVAS_WIDTH / SQUARE_STEP;
         // Canvas height will be computed in JS; server needs dataCells for scale only.
         // Use a generous row estimate (50 rows) to keep scale reasonable.
+        // Fixed upper bound for scale computation: the JS canvas grows dynamically but will never exceed this row count given the scale formula.
         int estimatedRows = 50;
         int dataCells = (estimatedRows * cols) - (FREE_ROWS * cols);
         long scale = Math.max(1L, (long) Math.ceil((double) totalRecords / dataCells));
