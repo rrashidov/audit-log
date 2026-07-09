@@ -26,8 +26,7 @@
     <!-- Legend -->
     <div class="d-flex flex-wrap gap-3 mb-3">
         <div th:each="type : ${typeOrder}" class="d-flex align-items-center gap-2">
-            <div style="width:14px;height:14px;border-radius:2px;"
-                 th:style="|width:14px;height:14px;border-radius:2px;background:${colors[type]};|"></div>
+            <div th:style="|width:14px;height:14px;border-radius:2px;background:${colors[type]};|"></div>
             <span class="small" th:text="${type}"></span>
         </div>
         <div class="d-flex align-items-center gap-2">

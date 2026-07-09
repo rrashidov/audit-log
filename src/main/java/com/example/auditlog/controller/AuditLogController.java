@@ -100,11 +100,13 @@ public class AuditLogController {
         int dataCells = (estimatedRows * cols) - (FREE_ROWS * cols);
         long scale = Math.max(1L, (long) Math.ceil((double) totalRecords / dataCells));
 
+        Map<String, String> colors = new LinkedHashMap<>(TYPE_COLORS);
+
         model.addAttribute("counts", counts);
         model.addAttribute("totalRecords", totalRecords);
         model.addAttribute("scale", scale);
         model.addAttribute("typeOrder", TYPE_ORDER);
-        model.addAttribute("colors", TYPE_COLORS);
+        model.addAttribute("colors", colors);
         return "auditlog/grid";
     }
 }
