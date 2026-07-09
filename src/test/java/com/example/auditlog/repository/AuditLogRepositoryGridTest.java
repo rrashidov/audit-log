@@ -3,6 +3,7 @@ package com.example.auditlog.repository;
 import com.example.auditlog.entity.AuditLog;
 import com.example.auditlog.enums.EntryType;
 import com.example.auditlog.enums.OperationType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,11 @@ class AuditLogRepositoryGridTest {
         repo.deleteAll();
     }
 
+    @AfterEach
+    void tearDown() {
+        repo.deleteAll();
+    }
+
     @Test
     void countByEntryType_returnsCorrectCountsPerType() {
         repo.save(auditLog(EntryType.REGULAR));
@@ -34,12 +40,15 @@ class AuditLogRepositoryGridTest {
         repo.save(auditLog(EntryType.MINUTE_CONSOLIDATION));
         repo.save(auditLog(EntryType.HOUR_CONSOLIDATION));
 
-        List<Object[]> results = repo.countByEntryType();
+        List<Object[]> results = repo.countGroupedByEntryType();
+
+        assertThat(results).hasSize(3);
 
         Map<EntryType, Long> counts = results.stream()
                 .collect(Collectors.toMap(
                         row -> (EntryType) row[0],
-                        row -> (Long) row[1]
+                        row -> (Long) row[1],
+                        (a, b) -> a + b
                 ));
 
         assertThat(counts.get(EntryType.REGULAR)).isEqualTo(2L);
@@ -50,7 +59,7 @@ class AuditLogRepositoryGridTest {
 
     @Test
     void countByEntryType_emptyTable_returnsEmptyList() {
-        List<Object[]> results = repo.countByEntryType();
+        List<Object[]> results = repo.countGroupedByEntryType();
         assertThat(results).isEmpty();
     }
 

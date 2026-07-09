@@ -25,5 +25,5 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, String>, Jpa
     Page<AuditLog> findByEntryTypeAndOperationType(EntryType entryType, OperationType operationType, Pageable pageable);
 
     @Query("SELECT a.entryType, COUNT(a) FROM AuditLog a GROUP BY a.entryType")
-    List<Object[]> countByEntryType();
+    List<Object[]> countGroupedByEntryType();
 }
