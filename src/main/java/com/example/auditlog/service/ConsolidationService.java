@@ -88,31 +88,31 @@ public class ConsolidationService {
 
     @Transactional
     public void runMinute() {
-        LocalDateTime cutoff = MINUTE_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC));
+        LocalDateTime cutoff = MINUTE_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC)).minusMinutes(1);
         consolidate(EntryType.REGULAR, EntryType.MINUTE_CONSOLIDATION, cutoff, MINUTE_BUCKET);
     }
 
     @Transactional
     public void runHour() {
-        LocalDateTime cutoff = HOUR_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC));
+        LocalDateTime cutoff = HOUR_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC)).minusHours(1);
         consolidate(EntryType.MINUTE_CONSOLIDATION, EntryType.HOUR_CONSOLIDATION, cutoff, HOUR_BUCKET);
     }
 
     @Transactional
     public void runDay() {
-        LocalDateTime cutoff = DAY_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC));
+        LocalDateTime cutoff = DAY_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC)).minusDays(1);
         consolidate(EntryType.HOUR_CONSOLIDATION, EntryType.DAY_CONSOLIDATION, cutoff, DAY_BUCKET);
     }
 
     @Transactional
     public void runMonth() {
-        LocalDateTime cutoff = MONTH_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC));
+        LocalDateTime cutoff = MONTH_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC)).minusMonths(1);
         consolidate(EntryType.DAY_CONSOLIDATION, EntryType.MONTH_CONSOLIDATION, cutoff, MONTH_BUCKET);
     }
 
     @Transactional
     public void runYear() {
-        LocalDateTime cutoff = YEAR_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC));
+        LocalDateTime cutoff = YEAR_BUCKET.apply(LocalDateTime.now(ZoneOffset.UTC)).minusYears(1);
         consolidate(EntryType.MONTH_CONSOLIDATION, EntryType.YEAR_CONSOLIDATION, cutoff, YEAR_BUCKET);
     }
 
