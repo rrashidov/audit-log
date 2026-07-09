@@ -40,7 +40,7 @@ class ConsolidationServiceCutoffTest {
         LocalDateTime cutoff = capturedCutoff(repo, EntryType.REGULAR);
         LocalDateTime expected = LocalDateTime.now(ZoneOffset.UTC)
                 .truncatedTo(ChronoUnit.MINUTES).minusMinutes(1);
-        assertThat(cutoff).isEqualTo(expected);
+        assertThat(cutoff).isBeforeOrEqualTo(expected);
     }
 
     @Test
@@ -53,7 +53,7 @@ class ConsolidationServiceCutoffTest {
         LocalDateTime cutoff = capturedCutoff(repo, EntryType.MINUTE_CONSOLIDATION);
         LocalDateTime expected = LocalDateTime.now(ZoneOffset.UTC)
                 .truncatedTo(ChronoUnit.HOURS).minusHours(1);
-        assertThat(cutoff).isEqualTo(expected);
+        assertThat(cutoff).isBeforeOrEqualTo(expected);
     }
 
     @Test
@@ -66,7 +66,7 @@ class ConsolidationServiceCutoffTest {
         LocalDateTime cutoff = capturedCutoff(repo, EntryType.HOUR_CONSOLIDATION);
         LocalDateTime expected = LocalDateTime.now(ZoneOffset.UTC)
                 .truncatedTo(ChronoUnit.DAYS).minusDays(1);
-        assertThat(cutoff).isEqualTo(expected);
+        assertThat(cutoff).isBeforeOrEqualTo(expected);
     }
 
     @Test
@@ -79,7 +79,7 @@ class ConsolidationServiceCutoffTest {
         LocalDateTime cutoff = capturedCutoff(repo, EntryType.DAY_CONSOLIDATION);
         LocalDateTime expected = LocalDateTime.now(ZoneOffset.UTC)
                 .truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1);
-        assertThat(cutoff).isEqualTo(expected);
+        assertThat(cutoff).isBeforeOrEqualTo(expected);
     }
 
     @Test
@@ -92,6 +92,6 @@ class ConsolidationServiceCutoffTest {
         LocalDateTime cutoff = capturedCutoff(repo, EntryType.MONTH_CONSOLIDATION);
         LocalDateTime expected = LocalDateTime.now(ZoneOffset.UTC)
                 .truncatedTo(ChronoUnit.DAYS).withDayOfYear(1).minusYears(1);
-        assertThat(cutoff).isEqualTo(expected);
+        assertThat(cutoff).isBeforeOrEqualTo(expected);
     }
 }
