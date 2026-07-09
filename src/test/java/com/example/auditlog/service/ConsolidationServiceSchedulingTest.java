@@ -18,17 +18,15 @@ class ConsolidationServiceSchedulingTest {
     void setUp() {
         AuditLogRepository repo = mock(AuditLogRepository.class);
         AtomicBoolean warmupComplete = new AtomicBoolean(true);
-        // Create actual service, then spy on it and use spy as self
         ConsolidationService actual = new ConsolidationService(repo, warmupComplete, null);
         spy = spy(actual);
-        // Now rebuild the service with spy as the self reference
+        doNothing().when(spy).runMinute();
+        doNothing().when(spy).runHour();
+        doNothing().when(spy).runDay();
+        doNothing().when(spy).runMonth();
+        doNothing().when(spy).runYear();
         service = new ConsolidationService(repo, warmupComplete, spy);
         service = spy(service);
-        doNothing().when(service).runMinute();
-        doNothing().when(service).runHour();
-        doNothing().when(service).runDay();
-        doNothing().when(service).runMonth();
-        doNothing().when(service).runYear();
     }
 
     @Test
