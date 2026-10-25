@@ -7,8 +7,6 @@ services:
       MYSQL_DATABASE: auditlog
       MYSQL_USER: auditlog
       MYSQL_PASSWORD: auditlog
-    ports:
-      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
